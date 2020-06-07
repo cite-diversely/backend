@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawCharts);
+
+      function drawCharts() {
+
+        var gender_data = google.visualization.arrayToDataTable([
+          ['Gender', 'Count'],
+          ['Very Likely Male',     {{vlmale}}],
+          ['Likely Male',      {{lmale}}],
+          ['Gender Neutral',  {{gn}}],
+          ['Likely Female', {{lfemale}}],
+          ['Very Likely Female',    {{vlfemale}}],
+          ['Unknown',    {{unknown}}]
+        ]);
+
+        var gender_options = {
+          title: 'Gender Composition of References'
+        };
+
+        var gender_chart = new google.visualization.PieChart(document.getElementById('gender_piechart'));
+        gender_chart.draw(gender_data, gender_options);
+
+        var ethnicity_data = google.visualization.arrayToDataTable([
+          ['Ethnicity', 'Count'],
+          ['White',     {{white}}],
+          ['Black',     {{black}}],
+          ['Asian or Pacific Islander',     {{api}}],
+          ['American Indian or Alaskan Native',     {{aian}}],
+          ['Multiple Races',     {{mr}}],
+          ['Hispanic',     {{hispanic}}],
+          ['Unknown',     {{unknown2}}]
+        ]);
+
+        var ethnicity_options = {
+          title: 'Race/Ethnicity Composition of References'
+        };
+
+
+        var ethnicity_chart = new google.visualization.PieChart(document.getElementById('ethnicity_piechart'));
+        ethnicity_chart.draw(ethnicity_data, ethnicity_options);
+      }
+
+
+    </script>
+  </head>
+  <body>
+    <div id="gender_piechart" style="width: 900px; height: 500px;"></div>
+    <div id="ethnicity_piechart" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>

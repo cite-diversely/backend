@@ -1,6 +1,6 @@
-ethnicolr
 bibtexparser
 nameparser
 pandas
 numpy
 flask
+flask_restful

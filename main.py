@@ -1,9 +1,7 @@
-import ethnicolr
 import bibtexparser
 import nameparser
 import pandas
 import gender_guesser.detector
-import numpy
 import flask
 import flask_restful
 import flask_restful.reqparse
@@ -23,10 +21,9 @@ class Evaluate(flask_restful.Resource):
     def post(self):
         # Get arguments
         args = parser.parse_args()
-        print(args['bib'])
         bib_database = bibtexparser.loads(args['bib'])
 
-        # Get ethnicity
+        # Extract names
         names = []
         for paper in bib_database.entries:
             authors = paper["author"].split(' and ')
@@ -34,60 +31,45 @@ class Evaluate(flask_restful.Resource):
                 name = nameparser.HumanName(person)
                 names.append({"last_name": name.last, "first_name": name.first})
 
-        df = pandas.DataFrame(names)
-        ethnicity = ethnicolr.census_ln(df, 'last_name')
-        most_likely_race = ethnicity[['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pct2prace', 'pcthispanic']].replace("(S)", numpy.nan).astype(float).idxmax(axis=1).fillna('Unknown')
+        names = pandas.DataFrame(names)
+
+        # Get ethnicity
+        ethnicity_lookup = pandas.read_csv("./data/Names_2010Census.csv", index_col=0)
+        most_likely_race = []
+        for name in names['last_name'].to_list():
+            if name.upper() in ethnicity_lookup.index:
+                most_likely_race.append(ethnicity_lookup.loc[name.upper()].to_frame().astype(float).drop(['rank', 'count', 'prop100k', 'cum_prop100k']).idxmax().values)
+            else:
+                most_likely_race.append('race_unknown')
+
         print(most_likely_race)
+        most_likely_race = pandas.Series(most_likely_race[0])
+        ethnicity_results = most_likely_race.value_counts()
 
         # Get gender
         d = gender_guesser.detector.Detector()
         gender = []
-        for name in df['first_name'].to_list():
+        for name in names['first_name'].to_list():
             gender.append(d.get_gender(name))
-        gender = pandas.DataFrame(gender, columns=['gender'])
-
-        # Combine the results
-        results = pandas.concat([ethnicity, gender], axis=1, sort=False)
-        results = results.replace("(S)", numpy.nan)
-
-        # Give summary stats
-        races = ['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pct2prace', 'pcthispanic', 'Unknown']
-        genders = ['male', 'mostly_male', 'andy', 'mostly_female', "female", "unknown"]
-        gender_results = results["gender"].value_counts()
-        ethnicity_results = most_likely_race.value_counts()
-        # ethnicity_results = results[['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pct2prace', 'pcthispanic']].mean(skipna=True)
+        gender = pandas.Series(gender)
+        gender_results = gender.value_counts()
 
         # Validate data
+        genders = ['male', 'mostly_male', 'andy', 'mostly_female', "female", "unknown"]
         for gender in genders:
             if gender not in gender_results.index:
                 n = pandas.Series([0], index=[gender])
                 gender_results = gender_results.append(n)
 
+        races = ['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pct2prace', 'pcthispanic', 'race_unknown']
         for race in races:
             if race not in ethnicity_results.index:
                 n = pandas.Series([0], index=[race])
                 ethnicity_results = ethnicity_results.append(n)
 
-        print(results.to_string())
-        print(gender_results.to_string())
-        print(ethnicity_results.to_string())
-
+        print(ethnicity_results)
+        print(gender_results)
         return ethnicity_results.append(gender_results).to_json()
-
-        # return flask.render_template("results.html",
-        #                              vlmale=gender_results['male'],
-        #                              lmale=gender_results['mostly_male'],
-        #                              gn=gender_results['andy'],
-        #                              lfemale=gender_results['mostly_female'],
-        #                              vlfemale=gender_results['female'],
-        #                              unknown=gender_results['unknown'],
-        #                              white=ethnicity_results['pctwhite'],
-        #                              black=ethnicity_results['pctblack'],
-        #                              api=ethnicity_results['pctapi'],
-        #                              aian=ethnicity_results['pctaian'],
-        #                              mr=ethnicity_results['pct2prace'],
-        #                              hispanic=ethnicity_results['pcthispanic'],
-        #                              unknown2=ethnicity_results['Unknown'])
 
 
 api.add_resource(Evaluate, "/")

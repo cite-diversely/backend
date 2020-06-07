@@ -1,6 +1,6 @@
-ethnicolr~=0.4.0
-bibtexparser~=1.2.0
-nameparser~=1.0.6
-pandas~=0.24.2
-numpy~=1.18.5
-flask~=1.0.2
+ethnicolr
+bibtexparser
+nameparser
+pandas
+numpy
+flask

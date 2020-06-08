@@ -44,8 +44,7 @@ class Evaluate(flask_restful.Resource):
             else:
                 most_likely_race.append('race_unknown')
 
-        print(most_likely_race)
-        most_likely_race = pandas.Series(most_likely_race[0])
+        most_likely_race = pandas.Series(most_likely_race)
         ethnicity_results = most_likely_race.value_counts()
 
         # Get gender

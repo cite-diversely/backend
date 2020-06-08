@@ -5,10 +5,12 @@ import gender_guesser.detector
 import flask
 import flask_restful
 import flask_restful.reqparse
+import flask_cors
 
 # Make app and API
 app = flask.Flask(__name__)
 api = flask_restful.Api(app)
+flask_cors.CORS(app)
 
 # Create arguments to pass
 parser = flask_restful.reqparse.RequestParser()
@@ -38,7 +40,7 @@ class Evaluate(flask_restful.Resource):
         most_likely_race = []
         for name in names['last_name'].to_list():
             if name.upper() in ethnicity_lookup.index:
-                most_likely_race.append(ethnicity_lookup.loc[name.upper()].to_frame().astype(float).drop(['rank', 'count', 'prop100k', 'cum_prop100k']).idxmax().values)
+                most_likely_race.append(ethnicity_lookup.loc[name.upper()].to_frame().replace("(S)", "0").astype(float).drop(['rank', 'count', 'prop100k', 'cum_prop100k']).idxmax().values[0])
             else:
                 most_likely_race.append('race_unknown')
 

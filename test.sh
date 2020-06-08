@@ -16,4 +16,4 @@ title = {{Assessing the quality of mobile graphical user interfaces using multi-
 year = {2019}
 }'
 
-curl http://localhost:5000/ --data-urlencode "$(echo $QUERY)" -X POST -v
+curl https://cmccomb-reference-diversity-1.glitch.me/ --data-urlencode "$(echo $QUERY)" -X POST -v

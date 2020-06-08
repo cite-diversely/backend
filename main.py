@@ -1,11 +1,10 @@
-import bibtexparser
-import nameparser
-import pandas
-import gender_guesser.detector
-import flask
-import flask_restful
-import flask_restful.reqparse
-import flask_cors
+import bibtexparser  # For parsing bibtex input
+import nameparser  # For splitting first and last names - honestly, I was being lazy
+import pandas  # For dealing with tables
+import gender_guesser.detector  # For detecting gender
+import flask  # Serve that flask
+import flask_cors  # Serve that flask
+import flask_restful.reqparse  # Serve that flask
 
 # Make app and API
 app = flask.Flask(__name__)
@@ -28,10 +27,11 @@ class Evaluate(flask_restful.Resource):
         # Extract names
         names = []
         for paper in bib_database.entries:
-            authors = paper["author"].split(' and ')
-            for person in authors:
-                name = nameparser.HumanName(person)
-                names.append({"last_name": name.last, "first_name": name.first})
+            if "author" in paper:
+                authors = paper["author"].split(' and ')
+                for person in authors:
+                    name = nameparser.HumanName(person)
+                    names.append({"last_name": name.last, "first_name": name.first})
 
         names = pandas.DataFrame(names)
 

@@ -23,7 +23,7 @@ class Evaluate(flask_restful.Resource):
         refs.infer_gender()
         refs.infer_ethnicity()
 
-        return refs.ethnicity_results.append(refs.gender_results).to_json()
+        return flask.jsonify(refs.ethnicity_results.update(refs.gender_results))
 
 
 api.add_resource(Evaluate, "/")

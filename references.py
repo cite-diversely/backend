@@ -70,3 +70,4 @@ if __name__ == "__main__":
         x.infer_gender()
         print(x.ethnicity_results)
         print(x.gender_results)
+        print({**x.ethnicity_results, **x.gender_results})

@@ -22,7 +22,6 @@ class Evaluate(flask_restful.Resource):
         refs = references.References(args['bib'])
         refs.infer_gender()
         refs.infer_ethnicity()
-        refs.validate_data()
 
         return refs.ethnicity_results.append(refs.gender_results).to_json()
 

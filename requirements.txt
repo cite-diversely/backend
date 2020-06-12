@@ -1,7 +1,5 @@
 bibtexparser
 nameparser
-pandas
-numpy
 flask
 flask_cors
 flask_restful

@@ -3,6 +3,8 @@ import nameparser
 import gender_guesser.detector
 import csv
 import operator
+import os
+import pickle
 
 
 class References(object):
@@ -14,17 +16,21 @@ class References(object):
         self.ethnicity_results = {key: 0 for key in self.race_options}
 
         # Load data
-        self.ethnicity_lookup = {}
-        with open('./data/Names_2010Census.csv') as csv_file:
-            reader = csv.DictReader(csv_file)
-            for row in reader:
-                self.ethnicity_lookup[row['name']] = {}
-                for race in self.race_options[:-1]:
-                    try:
-                        value = float(row[race])
-                    except ValueError:
-                        value = 0
-                    self.ethnicity_lookup[row['name']][race] = value
+        if os.path.isfile('./data/ethnicity_lookup.p'):
+            self.ethnicity_lookup = pickle.load(open('./data/ethnicity_lookup.p', 'rb'))
+        else:
+            self.ethnicity_lookup = {}
+            with open('./data/Names_2010Census.csv') as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    self.ethnicity_lookup[row['name']] = {}
+                    for race in self.race_options[:-1]:
+                        try:
+                            value = float(row[race])
+                        except ValueError:
+                            value = 0
+                        self.ethnicity_lookup[row['name']][race] = value
+            pickle.dump(self.ethnicity_lookup, open('./data/ethnicity_lookup.p', 'wb'))
 
         # Parse names from input
         self.reference_text = reference_text
@@ -63,11 +69,13 @@ class References(object):
             self.gender_results[i] = self.gender_results.get(i, 0) + 1
 
 
-if __name__ == "__main__":
+def run_all():
     with open('./test/test2.bib', 'r') as file:
         x = References(file.read())
         x.infer_ethnicity()
         x.infer_gender()
-        print(x.ethnicity_results)
-        print(x.gender_results)
-        print({**x.ethnicity_results, **x.gender_results})
+
+
+if __name__ == "__main__":
+    import cProfile
+    cProfile.run('run_all()')

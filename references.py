@@ -14,6 +14,7 @@ class References(object):
         self.gender_results = {key: 0 for key in self.gender_options}
         self.race_options = ['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pct2prace', 'pcthispanic', 'race_unknown']
         self.ethnicity_results = {key: 0 for key in self.race_options}
+        self.raw_results = {}
 
         # Load data
         if os.path.isfile('./data/ethnicity_lookup.p'):
@@ -44,6 +45,8 @@ class References(object):
                     name = nameparser.HumanName(person)
                     self.first_names.append(name.first)
                     self.last_names.append(name.last)
+        self.raw_results['first_name'] = self.first_names
+        self.raw_results['last_name'] = self.last_names
 
     def infer_ethnicity(self):
         # Get ethnicity
@@ -54,18 +57,20 @@ class References(object):
                 most_likely_race.append(rr)
             else:
                 most_likely_race.append('race_unknown')
+        self.raw_results['most_likely_race'] = most_likely_race
 
         for i in most_likely_race:
             self.ethnicity_results[i] = self.ethnicity_results.get(i, 0) + 1
 
     def infer_gender(self):
         # Get gender
+        most_likely_gender = []
         d = gender_guesser.detector.Detector()
-        gender = []
         for name in self.first_names:
-            gender.append(d.get_gender(name))
+            most_likely_gender.append(d.get_gender(name))
+        self.raw_results['most_likely_gender'] = most_likely_gender
 
-        for i in gender:
+        for i in most_likely_gender:
             self.gender_results[i] = self.gender_results.get(i, 0) + 1
 
 

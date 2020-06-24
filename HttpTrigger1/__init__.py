@@ -1,3 +1,4 @@
+# For main things
 import bibtexparser
 import nameparser
 import gender_guesser.detector
@@ -5,7 +6,12 @@ import csv
 import operator
 import os
 import pickle
+import json
+import pathlib
 
+# For Azure things
+import logging
+import azure.functions as func
 
 class References(object):
 
@@ -16,12 +22,15 @@ class References(object):
         self.ethnicity_results = {key: 0 for key in self.race_options}
         self.raw_results = {}
 
+        pickle_path = pathlib.Path(__file__).parent / 'data' / 'ethnicity_lookup.p'
+        csv_path = pathlib.Path(__file__).parent / 'data' / 'Names_2010Census.csv'
+
         # Load data
-        if os.path.isfile('./data/ethnicity_lookup.p'):
-            self.ethnicity_lookup = pickle.load(open('./data/ethnicity_lookup.p', 'rb'))
+        if os.path.isfile(pickle_path):
+            self.ethnicity_lookup = pickle.load(open(pickle_path, 'rb'))
         else:
             self.ethnicity_lookup = {}
-            with open('./data/Names_2010Census.csv') as csv_file:
+            with open(csv_path) as csv_file:
                 reader = csv.DictReader(csv_file)
                 for row in reader:
                     self.ethnicity_lookup[row['name']] = {}
@@ -31,7 +40,7 @@ class References(object):
                         except ValueError:
                             value = 0
                         self.ethnicity_lookup[row['name']][race] = value
-            pickle.dump(self.ethnicity_lookup, open('./data/ethnicity_lookup.p', 'wb'))
+            pickle.dump(self.ethnicity_lookup, open(pickle_path, 'wb'))
 
         # Parse names from input
         self.reference_text = reference_text
@@ -74,13 +83,40 @@ class References(object):
             self.gender_results[i] = self.gender_results.get(i, 0) + 1
 
 
-def run_all():
-    with open('./test/test2.bib', 'r') as file:
-        x = References(file.read())
-        x.infer_ethnicity()
-        x.infer_gender()
 
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+    logging.info(req.get_body())
 
-if __name__ == "__main__":
-    import cProfile
-    cProfile.run('run_all()')
+    name = req.get_body().decode('utf8')
+    logging.info(name)
+
+    # name = req.params.get('name')
+    # if not name:
+    #     try:
+    #         req_body = req.get_json()
+    #     except ValueError:
+    #         pass
+    #     else:
+    #         name = req_body.get('name')
+
+    if name:
+        refs = References(name)
+        logging.info("Reference object created")
+        refs.infer_gender()
+        logging.info("Gender inferred")
+        refs.infer_ethnicity()
+        logging.info("Ethnicity inferred")
+
+        name = {**refs.ethnicity_results, **refs.gender_results, **refs.raw_results}
+
+        return  func.HttpResponse(
+            json.dumps(name),
+            mimetype="application/json",
+        )
+    else:
+        return func.HttpResponse(
+             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+             status_code=200
+        )
+

@@ -13,6 +13,7 @@ import pathlib
 import logging
 import azure.functions as func
 
+
 class References(object):
 
     def __init__(self, reference_text):
@@ -41,10 +42,12 @@ class References(object):
                             value = 0
                         self.ethnicity_lookup[row['name']][race] = value
             pickle.dump(self.ethnicity_lookup, open(pickle_path, 'wb'))
-
+            
         # Parse names from input
         self.reference_text = reference_text
         self.references = bibtexparser.loads(reference_text)
+        logging.info(self.reference_text)
+        logging.info(self.references.entries)
         self.first_names = []
         self.last_names = []
         for paper in self.references.entries:
@@ -83,7 +86,6 @@ class References(object):
             self.gender_results[i] = self.gender_results.get(i, 0) + 1
 
 
-
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     logging.info(req.get_body())
@@ -91,16 +93,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     name = req.get_body().decode('utf8')
     logging.info(name)
 
-    # name = req.params.get('name')
-    # if not name:
-    #     try:
-    #         req_body = req.get_json()
-    #     except ValueError:
-    #         pass
-    #     else:
-    #         name = req_body.get('name')
-
     if name:
+        logging.info("Starting process")
         refs = References(name)
         logging.info("Reference object created")
         refs.infer_gender()
@@ -110,13 +104,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         name = {**refs.ethnicity_results, **refs.gender_results, **refs.raw_results}
 
-        return  func.HttpResponse(
+        return func.HttpResponse(
             json.dumps(name),
             mimetype="application/json",
         )
     else:
         return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+             "A reference list was not properly identified.",
              status_code=200
         )
-

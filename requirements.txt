@@ -3,7 +3,7 @@ aniso8601==8.0.0
 bibtexparser==1.2.0
 click==7.1.2
 Flask==1.1.2
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-RESTful==0.3.8
 future==0.18.2
 gender-guesser==0.4.0
